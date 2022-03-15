@@ -23,6 +23,7 @@ import com.google.common.collect.ImmutableList;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.permission.Tristate;
+import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.ServerConnection;
@@ -30,6 +31,8 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.kyori.adventure.identity.Identity;
@@ -63,15 +66,38 @@ public class ServerCommand implements SimpleCommand {
       // Trying to connect to a server.
       String serverName = args[0];
       Optional<RegisteredServer> toConnect = server.getServer(serverName);
+      Optional<RegisteredServer> limboConnect = server.getServer("limbo");
+      if (!limboConnect.isPresent()) {
+        player.sendMessage(Identity.nil(), CommandMessages.SERVER_DOES_NOT_EXIST
+                .args(Component.text("limbo")));
+        return;
+      }
+
       if (!toConnect.isPresent()) {
         player.sendMessage(Identity.nil(), CommandMessages.SERVER_DOES_NOT_EXIST
             .args(Component.text(serverName)));
         return;
       }
 
-      player.createConnectionRequest(toConnect.get()).fireAndForget();
+      if (!player.getCurrentServer().get().getServerInfo().getName().equalsIgnoreCase("limbo")) {
+        player.createConnectionRequest(limboConnect.get()).connectWithIndication().thenRunAsync(() -> {
+          attemptSwap(player, toConnect);
+        });
+      } else {
+        player.createConnectionRequest(toConnect.get()).fireAndForget();
+      }
     } else {
       outputServerInformation(player);
+    }
+  }
+
+  private void attemptSwap(Player player, Optional<RegisteredServer> server) {
+    try {
+      if (player.createConnectionRequest(server.get()).connect().get().getStatus() != ConnectionRequestBuilder.Status.SUCCESS) {
+        attemptSwap(player, server);
+      }
+    } catch (InterruptedException | ExecutionException e) {
+      e.printStackTrace();
     }
   }
 
