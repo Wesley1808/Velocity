@@ -65,7 +65,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
 
   @Override
   public boolean handle(KeepAlive packet) {
-    VelocityServerConnection serverConnection = player.getConnectedServer();
+    VelocityServerConnection serverConnection = player.getConnectionInFlight();
     if (serverConnection != null) {
       Long sentTime = serverConnection.getPendingPings().remove(packet.getRandomId());
       if (sentTime != null) {
@@ -109,14 +109,14 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
 
   @Override
   public void handleGeneric(MinecraftPacket packet) {
-    VelocityServerConnection serverConnection = player.getConnectedServer();
+    VelocityServerConnection serverConnection = player.getConnectionInFlight();
     if (serverConnection == null) {
       // No server connection yet, probably transitioning.
       return;
     }
 
     MinecraftConnection smc = serverConnection.getConnection();
-    if (smc != null && serverConnection.getPhase().consideredComplete()) {
+    if (smc != null) {
       if (packet instanceof PluginMessage) {
         ((PluginMessage) packet).retain();
       }
@@ -126,14 +126,14 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
 
   @Override
   public void handleUnknown(ByteBuf buf) {
-    VelocityServerConnection serverConnection = player.getConnectedServer();
+    VelocityServerConnection serverConnection = player.getConnectionInFlight();
     if (serverConnection == null) {
       // No server connection yet, probably transitioning.
       return;
     }
 
     MinecraftConnection smc = serverConnection.getConnection();
-    if (smc != null && !smc.isClosed() && serverConnection.getPhase().consideredComplete()) {
+    if (smc != null && !smc.isClosed()) {
       smc.write(buf.retain());
     }
   }

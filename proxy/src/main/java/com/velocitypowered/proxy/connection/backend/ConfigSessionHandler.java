@@ -41,7 +41,6 @@ import com.velocitypowered.proxy.protocol.packet.config.TagsUpdate;
 import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
-import net.kyori.adventure.text.Component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -188,15 +187,9 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
           .write(
               PluginMessageUtil.rewriteMinecraftBrand(
                   packet, server.getVersion(), serverConn.getPlayer().getProtocolVersion()));
-    } else {
-      // TODO: Change this so its usable for mod loaders
-      serverConn.disconnect();
-      resultFuture.complete(
-          ConnectionRequestResults.forDisconnect(
-              Component.translatable("multiplayer.disconnect.missing_tags"),
-              serverConn.getServer()));
+      return true;
     }
-    return true;
+    return false;
   }
 
   @Override
@@ -213,6 +206,10 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
 
   @Override
   public void handleGeneric(MinecraftPacket packet) {
+    if (packet instanceof PluginMessage) {
+      ((PluginMessage) packet).retain();
+    }
+
     serverConn.getPlayer().getConnection().write(packet);
   }
 
