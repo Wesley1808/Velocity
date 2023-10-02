@@ -92,8 +92,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
 
   @Override
   public boolean handle(ResourcePackResponse packet) {
-    player.getConnection().write(packet);
-    return true;
+    return player.onResourcePackResponse(packet.getStatus());
   }
 
   @Override
