@@ -377,8 +377,11 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
     ensureInEventLoop();
 
     this.state = state;
-    this.channel.pipeline().get(MinecraftEncoder.class).setState(state);
-    this.channel.pipeline().get(MinecraftDecoder.class).setState(state);
+
+    MinecraftEncoder encoder = channel.pipeline().get(MinecraftEncoder.class);
+    MinecraftDecoder decoder = channel.pipeline().get(MinecraftDecoder.class);
+    encoder.setState(state);
+    decoder.setState(state);
 
     if (state == StateRegistry.CONFIG) {
       // Activate the play packet queue
@@ -387,7 +390,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
           .addAfter(
               Connections.MINECRAFT_ENCODER,
               Connections.PLAY_PACKET_QUEUE,
-              new PlayPacketQueueHandler(this.protocolVersion));
+              new PlayPacketQueueHandler(this.protocolVersion, encoder.getDirection()));
     } else if (this.channel.pipeline().get(Connections.PLAY_PACKET_QUEUE) != null) {
       // Remove the queue
       this.channel.pipeline().remove(Connections.PLAY_PACKET_QUEUE);

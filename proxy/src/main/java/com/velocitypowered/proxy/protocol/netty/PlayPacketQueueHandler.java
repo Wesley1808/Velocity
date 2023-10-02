@@ -45,9 +45,9 @@ public class PlayPacketQueueHandler extends ChannelDuplexHandler {
   private final StateRegistry.PacketRegistry.ProtocolRegistry registry;
   private final Queue<MinecraftPacket> queue = PlatformDependent.newMpscQueue();
 
-  public PlayPacketQueueHandler(ProtocolVersion version) {
+  public PlayPacketQueueHandler(ProtocolVersion version, ProtocolUtils.Direction direction) {
     this.registry =
-        StateRegistry.CONFIG.getProtocolRegistry(ProtocolUtils.Direction.CLIENTBOUND, version);
+        StateRegistry.CONFIG.getProtocolRegistry(direction, version);
   }
 
   @Override

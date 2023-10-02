@@ -138,7 +138,7 @@ public enum StateRegistry {
       serverbound.register(
           ResourcePackResponse.class,
           ResourcePackResponse::new,
-          map(0x05, MINECRAFT_1_20_2, true));
+          map(0x05, MINECRAFT_1_20_2, false));
 
       clientbound.register(
           PluginMessage.class, PluginMessage::new, map(0x00, MINECRAFT_1_20_2, false));
